@@ -7,7 +7,7 @@
     "build:assets": "node utils/ci/copy-files.mjs packages/atomic-react/dist/assets public/assets packages/atomic-react/dist/lang public/lang packages/atomic/dist/themes public/themes",
     "dev": "pnpm dev:vite",
     "dev:vite": "vite",
-    "build": "pnpm build:ts && pnpm build:vite",
+    "build": "vite build",
     "build:ts": "pnpm --filter @coveo/ci if-not-cdn -- \"tsc -b\"",
     "build:vite": "pnpm --filter @coveo/ci if-not-cdn -- \"vite build\""
   },
