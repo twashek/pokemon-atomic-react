@@ -92,13 +92,8 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({
         configuration: {
           ...getConfigurationForSample(sample),
           analytics: {
-            enabled: true,
-            analyticsMode: 'legacy',
-            originLevel2: 'MainPokedex',
+            trackingId: 'pokemon-atomic-react',
           },
-        },
-        initialState: {
-          pagination: { pageSize: 12 },
         },
       }),
     [sample]
@@ -194,7 +189,6 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({
           </AtomicLayoutSection>
             <AtomicLoadMoreResults />
           </AtomicLayoutSection>
-            <AtomicResultsPerPage initialChoice={100} />
       </AtomicSearchLayout>
     </AtomicSearchInterface>
   );
