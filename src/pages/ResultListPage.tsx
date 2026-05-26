@@ -66,6 +66,10 @@ const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({
     externalNavigate(`/pokemon/${pokemonNameParam}`, {state: {result}});
   };
 
+  // Logic to handle potential multi-value national numbers and formatting
+  const rawNationalNum = result.raw.pokemon_national_num as string | undefined;
+  const displayNationalNum = rawNationalNum ? rawNationalNum.split(';')[0] : null;
+
   const pokemonDisplayName =
     (result.raw.pokemon_name as string) || result.title;
 
@@ -75,6 +79,12 @@ const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({
         .field {display: inline-block; align-items: center; margin-right: 10px;}
         .field-label {font-weight: bold; margin-right: 0.25rem;}
         .result-card-image {width: 100%; max-height: 200px; object-fit: contain; display: block; margin-bottom: 10px;}
+        .national-number {
+          font-family: monospace;
+          color: #888;
+          font-size: 0.85rem;
+          margin-bottom: 2px;
+        }
         .excerpt-truncate {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -98,13 +108,16 @@ const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({
       </AtomicResultSectionVisual>
 
       <AtomicResultSectionTitle>
+        {displayNationalNum && (
+          <div className="national-number">#{displayNationalNum}</div>
+        )}
         <a
           href="#"
           onClick={handleTitleClick}
           style={{
             fontSize: '1.3rem',
             fontWeight: 'bold',
-            color: '#0056b3',
+            color: '#ef5350',
             cursor: 'pointer',
             textDecoration: 'none',
           }}
@@ -117,13 +130,13 @@ const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({
         <AtomicResultText field="excerpt" className="excerpt-truncate" />
       </AtomicResultSectionExcerpt>
 
-      <div style={{marginTop: '1rem', display: 'flex', gap: '5px'}}>
+      <div style={{marginTop: '1rem', display: 'flex', gap: '5px', fontSize: '0.9rem'}}>
         <p style={{fontWeight: 'bold'}}>Type:</p>
         <AtomicResultMultiValueText field="pokemon_types" />
       </div>
 
       {result.raw.pokemon_weight && (
-        <div className="field">
+        <div className="field" style={{fontSize: '0.9rem'}}>
           <span className="field-label">Weight:</span>
           <AtomicResultText field="pokemon_weight" />
         </div>

@@ -1,23 +1,16 @@
 import {
   AtomicBreadbox,
-  AtomicColorFacet,
   AtomicDidYouMean,
   AtomicFacet,
   AtomicFacetManager,
-  AtomicFormatCurrency,
   AtomicLayoutSection,
   AtomicLoadMoreResults,
   AtomicNoResults,
-  AtomicNumericFacet,
-  AtomicNumericRange,
   AtomicQueryError,
   AtomicQuerySummary,
-  AtomicRatingFacet,
-  AtomicRatingRangeFacet,
   AtomicRefineToggle,
   AtomicResultImage,
   AtomicResultLink,
-  AtomicResultNumber,
   AtomicResultRating,
   AtomicResultSectionTitle,
   AtomicResultSectionTitleMetadata,
@@ -27,12 +20,9 @@ import {
   AtomicSearchBoxQuerySuggestions,
   AtomicSearchBoxRecentQueries,
   AtomicSearchInterface,
-  AtomicResultsPerPage,
   AtomicSearchLayout,
   AtomicSortDropdown,
   AtomicSortExpression,
-  AtomicTimeframe,
-  AtomicTimeframeFacet,
   type Bindings,
 } from '@coveo/atomic-react';
 import {
@@ -60,11 +50,10 @@ type Props = {
 };
 
 function getElectronicsConfiguration(): SearchEngineConfiguration {
-  //const accessToken = 'xxc23ce82a-3733-496e-b37e-9736168c4fd9';
-  const accessToken = 'xx141be452-d8ad-4e51-8098-9cf85feab66c'; //'xx2c7248f0-2b95-4caf-b69e-7540b3bdfc22'; //first org
-  const organizationId = 'psjlzopg4zxkq4jxmyvglhacadq'; //'psjyvooq42sokr7izw4wie4cehi'; //'electronicscoveodemocomo0n2fu8v';
+  const accessToken = 'xx141be452-d8ad-4e51-8098-9cf85feab66c';
+  const organizationId = 'psjlzopg4zxkq4jxmyvglhacadq';
   const pipeline = 'default';
-  const searchHub = 'default'; //'UI_KIT_E2E';
+  const searchHub = 'default';
   return {
     accessToken,
     organizationId,
@@ -112,15 +101,6 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({
     <AtomicSearchInterface
       engine={engine}
       fieldsToInclude={[
-        'ec_price',
-        'ec_rating',
-        'ec_images',
-        'ec_brand',
-        'cat_platform',
-        'cat_condition',
-        'cat_categories',
-        'cat_review_count',
-        'cat_color',
         'pokemon_image',
         'pokemon_name',
         'pokemon_desc',
@@ -152,10 +132,9 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({
             <div style={{display: 'flex', justifyContent: 'flex-start'}}>
               <AtomicDidYouMean automaticallyCorrectQuery />
             </div>
-            <AtomicSearchBoxRecentQueries />
           </AtomicSearchBox>
-          
         </AtomicLayoutSection>
+
         <AtomicLayoutSection section="facets">
           <AtomicFacetManager>
             <AtomicFacet field="source" label="Source" />
@@ -164,63 +143,39 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({
             <AtomicFacet field="pokemon_generation" label="Pokemon Generation" number-of-values="5"/>
           </AtomicFacetManager>
         </AtomicLayoutSection>
+
         <AtomicLayoutSection section="main">
           <AtomicLayoutSection section="status">
             <AtomicBreadbox />
             <AtomicQuerySummary />
             <AtomicRefineToggle />
             <AtomicSortDropdown>
-              <AtomicSortExpression label="relevance" expression="relevancy" />
+              <AtomicSortExpression label="Relevance" expression="relevancy" />
               <AtomicSortExpression
-                label="Price (low to high)"
-                expression="ec_price ascending"
+                label="National Number (Low to High)"
+                expression="pokemon_national_num ascending"
               />
               <AtomicSortExpression
-                label="Price (high to low)"
-                expression="ec_price descending"
+                label="National Number (High to Low)"
+                expression="pokemon_national_num descending"
               />
             </AtomicSortDropdown>
-
           </AtomicLayoutSection>
+
           <AtomicLayoutSection section="results">
             {children}
             <AtomicQueryError />
             <AtomicNoResults />
-          </AtomicLayoutSection>
             <AtomicLoadMoreResults />
           </AtomicLayoutSection>
+        </AtomicLayoutSection>
       </AtomicSearchLayout>
     </AtomicSearchInterface>
   );
 };
 
-function InstantResultsAriaLabelTemplate({i18n}: Bindings, result: Result) {
-  const information = [result.title];
-
-  if ('ec_rating' in result.raw) {
-    information.push(
-      i18n.t('stars', {
-        count: result.raw.ec_rating as number,
-        max: 5,
-      })
-    );
-  } else {
-    information.push(i18n.t('no-ratings-available'));
-  }
-
-  if ('ec_price' in result.raw) {
-    information.push(
-      (result.raw.ec_price as number).toLocaleString(
-        i18n.languages as string[],
-        {
-          style: 'currency',
-          currency: 'USD',
-        }
-      )
-    );
-  }
-
-  return information.join(', ');
+function InstantResultsAriaLabelTemplate({}: Bindings, result: Result) {
+  return result.title;
 }
 
 function InstantResultsTemplate() {
@@ -228,17 +183,11 @@ function InstantResultsTemplate() {
     <>
       <style>{'.result-root{padding: 14px;}'}</style>
       <AtomicResultSectionVisual>
-        <AtomicResultImage field="ec_images" />
+        <AtomicResultImage field="pokemon_image" />
       </AtomicResultSectionVisual>
       <AtomicResultSectionTitle>
         <AtomicResultLink />
       </AtomicResultSectionTitle>
-      <AtomicResultSectionTitleMetadata>
-        <AtomicResultRating field="ec_rating" />
-        <AtomicResultNumber field="ec_price">
-          <AtomicFormatCurrency currency="USD" />
-        </AtomicResultNumber>
-      </AtomicResultSectionTitleMetadata>
     </>
   );
 }
