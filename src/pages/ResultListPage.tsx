@@ -1,163 +1,118 @@
-// ResultListPage.tsx
-import {
-  AtomicResultList,
-  AtomicResultSectionVisual,
-  AtomicResultSectionTitle,
-  AtomicResultSectionExcerpt,
-  AtomicResultText,
-  AtomicResultMultiValueText,
-} from '@coveo/atomic-react';
-import {type FunctionComponent} from 'react';
-import {AtomicPageWrapper} from '../components/AtomicPageWrapper';
-import {type Result} from '@coveo/headless';
-import {useNavigate, type NavigateFunction} from 'react-router-dom';
+import { AtomicResultList, AtomicResultText, AtomicResultMultiValueText } from '@coveo/atomic-react';
+import { type FunctionComponent } from 'react';
+import { AtomicPageWrapper } from '../components/AtomicPageWrapper';
+import { type Result } from '@coveo/headless';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
 
-// --- Pokemon Card Component ---
 interface PokemonResultCardProps {
   result: Result;
-  externalNavigate: NavigateFunction;
+  navigate: NavigateFunction;
 }
 
-const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({
-  result,
-  externalNavigate,
-}) => {
-  const rawName = (result.raw.pokemon_name as string) || '';
-  const name = rawName
-    .toLowerCase()
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Strips accents like é -> e
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '');
-
+const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({ result, navigate }) => {
+  // --- Slug Normalization ---
+  const rawName = (result.raw.pokemon_name as string || '').toLowerCase().trim();
+  const slug = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  
   const imageUrls = {
-    avif: `https://img.pokemondb.net/artwork/avif/${name}.avif`,
-    large: `https://img.pokemondb.net/artwork/large/${name}.jpg`,
-    sprite: `https://img.pokemondb.net/sprites/scarlet-violet/normal/${name}.png`,
-    placeholder: `https://picsum.photos/seed/${name}/200`,
+    avif: `https://img.pokemondb.net/artwork/avif/${slug}.avif`,
+    large: `https://img.pokemondb.net/artwork/large/${slug}.jpg`,
+    sprite: `https://img.pokemondb.net/sprites/scarlet-violet/normal/${slug}.png`,
+    placeholder: `https://picsum.photos/seed/${slug}/200`
   };
 
-  const handleImageError = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>
-  ) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const img = e.currentTarget;
-    if (img.src === imageUrls.avif) {
-      img.src = imageUrls.large;
-    } else if (img.src === imageUrls.large) {
-      img.src = imageUrls.sprite;
-    } else if (img.src === imageUrls.sprite) {
-      img.src = imageUrls.placeholder;
-    }
+    if (img.src === imageUrls.avif) img.src = imageUrls.large;
+    else if (img.src === imageUrls.large) img.src = imageUrls.sprite;
+    else if (img.src === imageUrls.sprite) img.src = imageUrls.placeholder;
   };
 
-  const handleTitleClick = (e: React.MouseEvent) => {
+  // --- NEW: Dedicated Handler to block redirects ---
+  const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-
-    if (result.logClick) {
-      result.logClick();
-      console.log('Analytics: Click logged for', result.title);
-    }
-
-    const pokemonNameParam =
-      result.raw.pokemon_name?.toString().toLowerCase().replace(/\s+/g, '-') ||
-      result.uniqueId;
-    externalNavigate(`/pokemon/${pokemonNameParam}`, {state: {result}});
+    e.stopPropagation(); // Stops redirect
+    e.nativeEvent.stopImmediatePropagation();
+    navigate(`/pokemon/${slug}`, { state: { result } });
   };
 
-  // Logic to handle potential multi-value national numbers and formatting
-  const rawNationalNum = result.raw.pokemon_national_num as string | undefined;
-  const displayNationalNum = rawNationalNum ? rawNationalNum.split(';')[0] : null;
-
-  const pokemonDisplayName =
-    (result.raw.pokemon_name as string) || result.title;
+  const id = result.raw.pokemon_national_num ? (result.raw.pokemon_national_num as string).split(';')[0] : null;
 
   return (
-    <div style={{padding: '15px'}}>
+    <div style={{ 
+      background: '#fff', 
+      border: '1px solid #edf2f7', 
+      borderRadius: '20px', 
+      padding: '20px', 
+      boxShadow: '0 4px 6px rgba(0,0,0,0.02)', 
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <style>{`
-        .field {display: inline-block; align-items: center; margin-right: 10px;}
-        .field-label {font-weight: bold; margin-right: 0.25rem;}
-        .result-card-image {width: 100%; max-height: 200px; object-fit: contain; display: block; margin-bottom: 10px;}
-        .national-number {
-          font-family: monospace;
-          color: #888;
-          font-size: 0.85rem;
-          margin-bottom: 2px;
-        }
-        .excerpt-truncate {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;  
-            overflow: hidden;
-            font-size: 0.9rem;
-            color: #444;
-            margin-top: 0.5rem;
-          }
-       `}</style>
+        .grid-metadata-chip { background: #f7fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; flex: 1; text-align: center; }
+        .grid-metadata-label { font-size: 0.6rem; color: #718096; display: block; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
+        .grid-metadata-value { font-size: 0.8rem; color: #2d3748; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .grid-pokedex-title { margin: 10px 0; color: #ef5350; cursor: pointer; font-size: 1.5rem; font-weight: 800; text-decoration: none; border: none; background: none; padding: 0; text-align: center; width: 100%; }
+        .grid-pokedex-title:hover { text-decoration: underline; }
+      `}</style>
 
-      <AtomicResultSectionVisual>
-        <img
-          src={imageUrls.avif}
-          alt={result.title}
-          className="result-card-image"
-          style={{cursor: 'pointer'}}
-          onClick={handleTitleClick}
-          onError={handleImageError}
+      {id && <div style={{ fontFamily: 'monospace', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>#{id}</div>}
+
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '15px 0' }}>
+        <img 
+          src={imageUrls.avif} 
+          style={{ width: '150px', height: '150px', objectFit: 'contain', cursor: 'pointer' }} 
+          onClick={handleNavigation} // Updated
+          onError={handleImageError} 
         />
-      </AtomicResultSectionVisual>
-
-      <AtomicResultSectionTitle>
-        {displayNationalNum && (
-          <div className="national-number">#{displayNationalNum}</div>
-        )}
-        <a
-          href="#"
-          onClick={handleTitleClick}
-          style={{
-            fontSize: '1.3rem',
-            fontWeight: 'bold',
-            color: '#ef5350',
-            cursor: 'pointer',
-            textDecoration: 'none',
-          }}
-        >
-          {pokemonDisplayName}
-        </a>
-      </AtomicResultSectionTitle>
-
-      <AtomicResultSectionExcerpt>
-        <AtomicResultText field="excerpt" className="excerpt-truncate" />
-      </AtomicResultSectionExcerpt>
-
-      <div style={{marginTop: '1rem', display: 'flex', gap: '5px', fontSize: '0.9rem'}}>
-        <p style={{fontWeight: 'bold'}}>Type:</p>
-        <AtomicResultMultiValueText field="pokemon_types" />
       </div>
 
-      {result.raw.pokemon_weight && (
-        <div className="field" style={{fontSize: '0.9rem'}}>
-          <span className="field-label">Weight:</span>
-          <AtomicResultText field="pokemon_weight" />
+      <button className="grid-pokedex-title" onClick={handleNavigation}> {/* Updated */}
+        {result.raw.pokemon_name as string || result.title}
+      </button>
+
+      <p style={{ 
+        color: '#4a5568', 
+        fontSize: '0.9rem', 
+        lineHeight: '1.4', 
+        margin: '0 0 15px 0', 
+        textAlign: 'center',
+        display: '-webkit-box',
+        WebkitLineClamp: 3,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        minHeight: '4.2em'
+      }}>
+        {result.excerpt}
+      </p>
+
+      <div style={{ marginTop: 'auto', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="grid-metadata-chip">
+            <span className="grid-metadata-label">Gen</span>
+            <div className="grid-metadata-value"><AtomicResultText field="pokemon_generation" /></div>
         </div>
-      )}
+        <div className="grid-metadata-chip">
+            <span className="grid-metadata-label">Type</span>
+            <div className="grid-metadata-value"><AtomicResultMultiValueText field="pokemon_types" /></div>
+        </div>
+      </div>
     </div>
   );
 };
 
-// --- Main Result List Page ---
 export const ResultListPage: FunctionComponent = () => {
   const navigate = useNavigate();
 
   return (
-    <AtomicPageWrapper sample="electronics">
-      <AtomicResultList
-        display="grid"
-        imageSize="small"
-        template={(result) => (
-          <PokemonResultCard result={result} externalNavigate={navigate} />
-        )}
-      />
+    <AtomicPageWrapper>
+      <div style={{ padding: '20px 0' }}>
+        <AtomicResultList 
+          display="grid" 
+          imageSize="none" 
+          template={(res) => <PokemonResultCard result={res} navigate={navigate} />} 
+        />
+      </div>
     </AtomicPageWrapper>
   );
 };

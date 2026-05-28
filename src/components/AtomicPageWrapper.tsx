@@ -1,6 +1,5 @@
 import {
   AtomicBreadbox,
-  AtomicDidYouMean,
   AtomicFacet,
   AtomicFacetManager,
   AtomicLayoutSection,
@@ -9,185 +8,102 @@ import {
   AtomicQueryError,
   AtomicQuerySummary,
   AtomicRefineToggle,
-  AtomicResultImage,
-  AtomicResultLink,
-  AtomicResultRating,
-  AtomicResultSectionTitle,
-  AtomicResultSectionTitleMetadata,
-  AtomicResultSectionVisual,
   AtomicSearchBox,
-  AtomicSearchBoxInstantResults,
   AtomicSearchBoxQuerySuggestions,
-  AtomicSearchBoxRecentQueries,
   AtomicSearchInterface,
   AtomicSearchLayout,
   AtomicSortDropdown,
   AtomicSortExpression,
-  type Bindings,
 } from '@coveo/atomic-react';
-import {
-  buildSearchEngine,
-  getSampleSearchEngineConfiguration,
-  loadAdvancedSearchQueryActions,
-  type Result,
-  type SearchEngineConfiguration,
-} from '@coveo/headless';
-import type React from 'react';
-import {type FunctionComponent, useMemo} from 'react';
+import { buildSearchEngine, type SearchEngine } from '@coveo/headless';
+import React, { type FunctionComponent, useMemo, useEffect, useRef } from 'react';
 
-type Sample = 'service' | 'electronics';
+let sharedEngine: SearchEngine | null = null;
 
-type Options = {
-  instantResults?: boolean;
-  recentQueries?: boolean;
-  advancedQuery?: string;
-};
-
-type Props = {
-  sample: Sample;
-  options?: Options;
+interface Props {
   children: React.ReactNode;
-};
-
-function getElectronicsConfiguration(): SearchEngineConfiguration {
-  const accessToken = 'xx141be452-d8ad-4e51-8098-9cf85feab66c';
-  const organizationId = 'psjlzopg4zxkq4jxmyvglhacadq';
-  const pipeline = 'default';
-  const searchHub = 'default';
-  return {
-    accessToken,
-    organizationId,
-    search: {pipeline, searchHub},
-  };
+  isCustomPage?: boolean; 
 }
 
-function getConfigurationForSample(sample: Sample) {
-  switch (sample) {
-    case 'service':
-      return getSampleSearchEngineConfiguration();
-    case 'electronics':
-      return getElectronicsConfiguration();
-  }
-}
-
-export const AtomicPageWrapper: FunctionComponent<Props> = ({
-  sample,
-  options = {},
-  children,
-}) => {
-  const engine = useMemo(
-    () =>
-      buildSearchEngine({
+export const AtomicPageWrapper: FunctionComponent<Props> = ({ children, isCustomPage }) => {
+  const engine = useMemo(() => {
+    if (!sharedEngine) {
+      sharedEngine = buildSearchEngine({
         configuration: {
-          ...getConfigurationForSample(sample),
-          analytics: {
-            trackingId: 'pokemon-atomic-react',
-          },
-        },
-      }),
-    [sample]
-  );
+          accessToken: 'xx141be452-d8ad-4e51-8098-9cf85feab66c',
+          organizationId: 'psjlzopg4zxkq4jxmyvglhacadq',
+          analytics: { enabled: true, trackingId: 'pokemon-atomic-react' },
+          search: { filterDuplicates: false } 
+        }
+      });
+    }
+    return sharedEngine;
+  }, []);
 
-  if (options.advancedQuery) {
-    const action = loadAdvancedSearchQueryActions(
-      engine
-    ).updateAdvancedSearchQueries({
-      aq: options.advancedQuery,
-    });
-    engine.dispatch(action);
-  }
+  const hasFired = useRef(false);
+  useEffect(() => {
+    if (engine && !isCustomPage && !hasFired.current) {
+      engine.executeFirstSearch();
+      hasFired.current = true;
+    }
+  }, [engine, isCustomPage]);
 
   return (
     <AtomicSearchInterface
       engine={engine}
+      // ALL CRITICAL FIELDS MUST BE HERE
       fieldsToInclude={[
-        'pokemon_image',
-        'pokemon_name',
-        'pokemon_desc',
-        'pokemon_generation',
-        'pokemon_species',
-        'pokemon_types',
-        'pokemon_height',
-        'pokemon_weight',
+        'pokemon_name', 
+        'pokemon_generation', 
+        'pokemon_species', 
+        'pokemon_types', 
         'pokemon_national_num',
+        'pokemon_image',
+        'pokemon_height',
+        'pokemon_weight'
       ]}
-      localization={(i18n) => {
-        i18n.addResourceBundle('en', 'translation', {
-          'no-ratings-available': 'No ratings available',
-        });
-      }}
     >
       <AtomicSearchLayout>
         <AtomicLayoutSection section="search">
-          <AtomicSearchBox>
-            <AtomicSearchBoxQuerySuggestions />
-            {options.recentQueries && <AtomicSearchBoxRecentQueries />}
-            {options.instantResults && (
-              <AtomicSearchBoxInstantResults
-                template={InstantResultsTemplate}
-                imageSize="small"
-                ariaLabelGenerator={InstantResultsAriaLabelTemplate}
-              />
-            )}
-            <div style={{display: 'flex', justifyContent: 'flex-start'}}>
-              <AtomicDidYouMean automaticallyCorrectQuery />
-            </div>
-          </AtomicSearchBox>
+          <AtomicSearchBox><AtomicSearchBoxQuerySuggestions /></AtomicSearchBox>
         </AtomicLayoutSection>
 
         <AtomicLayoutSection section="facets">
           <AtomicFacetManager>
-            <AtomicFacet field="source" label="Source" />
-            <AtomicFacet field="pokemon_types" label="Pokemon Type" number-of-values="5"/>
-            <AtomicFacet field="pokemon_species" label="Pokemon Species" number-of-values="5"/>
-            <AtomicFacet field="pokemon_generation" label="Pokemon Generation" number-of-values="5"/>
+            <AtomicFacet field="pokemon_types" label="Pokemon Type" />
+            <AtomicFacet field="pokemon_generation" label="Generation" />
           </AtomicFacetManager>
         </AtomicLayoutSection>
 
         <AtomicLayoutSection section="main">
-          <AtomicLayoutSection section="status">
-            <AtomicBreadbox />
-            <AtomicQuerySummary />
-            <AtomicRefineToggle />
-            <AtomicSortDropdown>
-              <AtomicSortExpression label="Relevance" expression="relevancy" />
-              <AtomicSortExpression
-                label="National Number (Low to High)"
-                expression="pokemon_national_num ascending"
-              />
-              <AtomicSortExpression
-                label="National Number (High to Low)"
-                expression="pokemon_national_num descending"
-              />
-            </AtomicSortDropdown>
-          </AtomicLayoutSection>
+          {!isCustomPage && (
+            <AtomicLayoutSection section="status">
+              <AtomicBreadbox />
+              <AtomicQuerySummary />
+              <AtomicRefineToggle />
+              <AtomicSortDropdown>
+                <AtomicSortExpression label="Relevance" expression="relevancy" />
+                <AtomicSortExpression label="National Number (Low to High)" expression="pokemon_national_num ascending" />
+                <AtomicSortExpression label="National Number (High to Low)" expression="pokemon_national_num descending" />
+                <AtomicSortExpression label="Generation (Low to High)" expression="pokemon_generation ascending" />
+                <AtomicSortExpression label="Generation (High to Low)" expression="pokemon_generation descending" />
+                
+              </AtomicSortDropdown>
+            </AtomicLayoutSection>
+          )}
 
           <AtomicLayoutSection section="results">
             {children}
-            <AtomicQueryError />
-            <AtomicNoResults />
-            <AtomicLoadMoreResults />
+            {!isCustomPage && (
+              <>
+                <AtomicQueryError />
+                <AtomicNoResults />
+                <AtomicLoadMoreResults />
+              </>
+            )}
           </AtomicLayoutSection>
         </AtomicLayoutSection>
       </AtomicSearchLayout>
     </AtomicSearchInterface>
   );
 };
-
-function InstantResultsAriaLabelTemplate({}: Bindings, result: Result) {
-  return result.title;
-}
-
-function InstantResultsTemplate() {
-  return (
-    <>
-      <style>{'.result-root{padding: 14px;}'}</style>
-      <AtomicResultSectionVisual>
-        <AtomicResultImage field="pokemon_image" />
-      </AtomicResultSectionVisual>
-      <AtomicResultSectionTitle>
-        <AtomicResultLink />
-      </AtomicResultSectionTitle>
-    </>
-  );
-}
