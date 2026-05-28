@@ -33,7 +33,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/pokemon/:pokemonName" element={<DetailPage />} />
-        <Route path="/grouped" element={<GroupedResultsListPage />} />
+        
         {/* 4. Define the explicit route for the grouped page */}
         <Route path="/grouped" element={
            <>
