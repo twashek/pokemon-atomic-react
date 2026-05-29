@@ -51,9 +51,10 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({ children, isCustom
   return (
     <AtomicSearchInterface
       engine={engine}
-      // ALL CRITICAL FIELDS MUST BE HERE
+      
       fieldsToInclude={[
-        'pokemon_name', 
+        'pokemon_name',
+        'pokemon_desc', 
         'pokemon_generation', 
         'pokemon_species', 
         'pokemon_types', 
@@ -65,13 +66,16 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({ children, isCustom
     >
       <AtomicSearchLayout>
         <AtomicLayoutSection section="search">
-          <AtomicSearchBox><AtomicSearchBoxQuerySuggestions /></AtomicSearchBox>
+          <AtomicSearchBox redirection-url='http://localhost:4173/search/'>
+            <AtomicSearchBoxQuerySuggestions />
+          </AtomicSearchBox>
         </AtomicLayoutSection>
 
         <AtomicLayoutSection section="facets">
           <AtomicFacetManager>
             <AtomicFacet field="pokemon_types" label="Pokemon Type" />
             <AtomicFacet field="pokemon_generation" label="Generation" />
+            <AtomicFacet field="pokemon_species" label="Pokemon Species" />
           </AtomicFacetManager>
         </AtomicLayoutSection>
 
@@ -87,7 +91,6 @@ export const AtomicPageWrapper: FunctionComponent<Props> = ({ children, isCustom
                 <AtomicSortExpression label="National Number (High to Low)" expression="pokemon_national_num descending" />
                 <AtomicSortExpression label="Generation (Low to High)" expression="pokemon_generation ascending" />
                 <AtomicSortExpression label="Generation (High to Low)" expression="pokemon_generation descending" />
-                
               </AtomicSortDropdown>
             </AtomicLayoutSection>
           )}

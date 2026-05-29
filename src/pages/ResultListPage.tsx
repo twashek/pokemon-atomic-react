@@ -10,7 +10,6 @@ interface PokemonResultCardProps {
 }
 
 const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({ result, navigate }) => {
-  // --- Slug Normalization ---
   const rawName = (result.raw.pokemon_name as string || '').toLowerCase().trim();
   const slug = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   
@@ -28,10 +27,9 @@ const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({ result, 
     else if (img.src === imageUrls.sprite) img.src = imageUrls.placeholder;
   };
 
-  // --- NEW: Dedicated Handler to block redirects ---
   const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Stops redirect
+    e.stopPropagation(); 
     e.nativeEvent.stopImmediatePropagation();
     navigate(`/pokemon/${slug}`, { state: { result } });
   };
@@ -57,18 +55,21 @@ const PokemonResultCard: FunctionComponent<PokemonResultCardProps> = ({ result, 
         .grid-pokedex-title:hover { text-decoration: underline; }
       `}</style>
 
+      {/* Hidden to check if field is loaded */}
+      <div style={{display: 'none'}}><AtomicResultText field="pokemon_desc" /></div>
+
       {id && <div style={{ fontFamily: 'monospace', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>#{id}</div>}
 
       <div style={{ display: 'flex', justifyContent: 'center', padding: '15px 0' }}>
         <img 
           src={imageUrls.avif} 
           style={{ width: '150px', height: '150px', objectFit: 'contain', cursor: 'pointer' }} 
-          onClick={handleNavigation} // Updated
+          onClick={handleNavigation} 
           onError={handleImageError} 
         />
       </div>
 
-      <button className="grid-pokedex-title" onClick={handleNavigation}> {/* Updated */}
+      <button className="grid-pokedex-title" onClick={handleNavigation}>
         {result.raw.pokemon_name as string || result.title}
       </button>
 

@@ -15,7 +15,6 @@ export const DetailPage = () => {
 
   // 1. Format Name once for all URL options
   const rawName = (result.raw.pokemon_name as string) || '';
-  //const name = rawName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   const name = rawName
     .toLowerCase()
     .trim()
@@ -49,6 +48,13 @@ export const DetailPage = () => {
     return Array.isArray(value) ? value.join(', ') : value || 'N/A';
   };
 
+  // Logic to determine the description: 
+  // Priority: pokemon_desc (Array) > pokemon_desc (String) > excerpt > fallback text
+  const rawDesc = result.raw.pokemon_desc;
+  const descriptionContent = (Array.isArray(rawDesc) ? rawDesc[0] : rawDesc) 
+   // || result.excerpt 
+    || 'No description available.';
+
   return (
     <div
       style={{
@@ -77,10 +83,10 @@ export const DetailPage = () => {
 
       <div style={{display: 'flex', gap: '3rem', alignItems: 'flex-start'}}>
         <img
-          src={imageUrls.avif} // Start with highest quality
+          src={imageUrls.avif}
           alt={result.title}
           title={result.title}
-          onError={handleImageError} // Trigger the fallback chain
+          onError={handleImageError}
           style={{
             width: 'auto',
             maxHeight: '400px',
@@ -97,10 +103,7 @@ export const DetailPage = () => {
           <div
             style={{lineHeight: '1.6', color: '#333', fontSize: '1.1rem'}}
             dangerouslySetInnerHTML={{
-              __html:
-                typeof result.raw.pokemon_desc === 'string'
-                  ? result.raw.pokemon_desc.replace(/;/g, ' ')
-                  : 'No description available.',
+              __html: descriptionContent.toString().replace(/;/g, ' ')
             }}
           />
 
@@ -194,7 +197,7 @@ export const DetailPage = () => {
                 border: '1px solid #ddd',
               }}
             >
-              {JSON.stringify(result.raw, null, 2)}
+              {JSON.stringify(result, null, 2)}
             </pre>
           </details>
         </div>
